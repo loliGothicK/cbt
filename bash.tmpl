@@ -1,0 +1,6 @@
+echo 'compiler:' {{.Compiler}}
+echo 'target:' {{.Target}}
+{{if .Clang}}
+/opt/wandbox/{{.Compiler}}/bin/clang++ {{.Target}} {{.Option}} && ./a.out{{else}}/opt/wandbox/{{.Compiler}}/bin/g++ {{.Target}} {{.Option}} && ./a.out{{end}}{{if .StdinFlag}} <<- EOS
+{{.Stdin}}
+EOS{{end}}
