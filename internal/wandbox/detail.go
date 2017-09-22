@@ -72,9 +72,10 @@ func flat(rm [][]string) []string {
 type Analyzer struct {
 	Regex *regexp.Regexp
 	Codes map[string]string
+	Path  map[string]string
 }
 
-// ExpandInclude : Expand only include files(for one file compilation)
+// ExpandInclude : Expand only included files(for one file compilation)
 func (analyzer *Analyzer) ExpandInclude(file string) (string, []AdditionalCode) {
 	return analyzer.expand([]string{file}, file)
 }
@@ -85,20 +86,43 @@ func (analyzer *Analyzer) ExpandAll(files []string) []AdditionalCode {
 	return ret
 }
 
-func (analyzer *Analyzer) expand(files []string, all string) (string, []AdditionalCode) {
+func (analyzer *Analyzer) expand(files []string, src string) (string, []AdditionalCode) {
 	if analyzer.Codes == nil {
 		analyzer.Codes = map[string]string{}
 	}
+	if analyzer.Path == nil {
+		analyzer.Path = map[string]string{}
+	}
+
 	init := map[string]string{}
+
 	for _, file := range files {
-		init[file] = file
+		abs, err := filepath.Abs(file)
+		if err != nil {
+			panic(err)
+		}
+		init[file] = abs
 	}
 	ret := []AdditionalCode{}
 	object := analyzer.analyzingTo(init)
 	prog := "false"
-	if all != "false" {
-		prog = object[all]
-		delete(object, all)
+	if src != "false" {
+		abs, err := filepath.Abs(src)
+		if err != nil {
+			panic(err)
+		}
+		prog = object[abs]
+		delete(object, abs)
+	} else {
+		for _, file := range files {
+			abs, err := filepath.Abs(file)
+			if err != nil {
+				panic(err)
+			}
+			tmp := object[abs]
+			delete(object, abs)
+			object[filepath.Base(abs)] = tmp
+		}
 	}
 	for file, code := range object {
 		ret = append(ret, AdditionalCode{file, code})
@@ -125,9 +149,19 @@ func (analyzer *Analyzer) analyzingTo(files map[string]string) map[string]string
 				str := strings.Join(include, "")
 				path := str[strings.Index(str, "\"")+1 : strings.LastIndex(str, "\"")]
 				next := filepath.Join(dir, path)
-				xtRename := unique(filepath.Base(path), analyzer.Codes)
-				rest[next] = xtRename
-				src = regexp.MustCompile(regexp.QuoteMeta(path)).ReplaceAll(src, ([]byte)(xtRename))
+				absNext, err := filepath.Abs(next)
+				if err != nil {
+					panic(err)
+				}
+				if _, ok := analyzer.Path[absNext]; ok {
+					src = regexp.MustCompile(regexp.QuoteMeta(path)).ReplaceAll(src, ([]byte)(analyzer.Path[absNext]))
+					continue
+				} else {
+					xtRename := unique(filepath.Base(path), analyzer.Codes)
+					analyzer.Path[absNext] = xtRename
+					rest[next] = xtRename
+					src = regexp.MustCompile(regexp.QuoteMeta(path)).ReplaceAll(src, ([]byte)(xtRename))
+				}
 			}
 			analyzer.Codes[rename] = string(src)
 		}
