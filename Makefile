@@ -9,6 +9,11 @@ preinstall:
 	go get golang.org/x/tools/cmd/cover
 	go get -u github.com/golang/lint/golint
 	go get github.com/goreleaser/goreleaser
+	go get github.com/urfave/cli
+	go get github.com/LoliGothick/freyja/cutil
+	go get github.com/LoliGothick/freyja/maybe
+	go get github.com/LoliGothick/freyja/set
+
 
 status:
 	dep status
