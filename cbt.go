@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -21,7 +22,17 @@ import (
 	"github.com/urfave/cli"
 )
 
+type CLI struct {
+	app *cli.App
+}
+
 func main() {
+	NewCLI().Run()
+}
+
+func NewCLI() *CLI {
+	_cli := new(CLI)
+
 	app := cli.NewApp()
 	app.Name = "cbt (Cranberries Build Tool)"
 	app.Usage = "C++ Build Tool"
@@ -160,23 +171,24 @@ func main() {
 			},
 		},
 	}
-
-	// app.Before = func(c *cli.Context) error {
-	// 	fmt.Println("Build Start. plz wait...")
-	// 	return nil
-	// }
-
-	// app.After = func(c *cli.Context) error {
-	// 	fmt.Println("Successfuly!")
-	// 	return nil
-	// }
-
 	app.Action = func(c *cli.Context) error {
 		fmt.Println("(´･_･`)? Command not found")
 		return nil
 	}
+	_cli.app = app
+	return _cli
+}
 
-	app.Run(os.Args)
+func (_cli *CLI) Run() {
+	_cli.app.Run(os.Args)
+}
+
+func (_cli *CLI) TestRun(args []string) ([]byte, error) {
+	outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
+	_cli.app.Writer = outStream
+	_cli.app.ErrWriter = errStream
+	err := _cli.app.Run(args)
+	return outStream.Bytes(), err
 }
 
 func WandboxC(c *cli.Context) {
@@ -304,7 +316,7 @@ EOS{{end}}
 			}
 		}
 	}
-	postRequest(config, c.Bool("s"))
+	postRequest(config, c.Bool("s"), c.App.Writer, c.App.ErrWriter)
 }
 
 func WandboxCpp(c *cli.Context) {
@@ -447,10 +459,10 @@ EOS{{end}}
 			}
 		}
 	}
-	postRequest(config, c.Bool("s"))
+	postRequest(config, c.Bool("s"), c.App.Writer, c.App.ErrWriter)
 }
 
-func postRequest(config wandbox.Request, save bool) bool {
+func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) bool {
 	// Marshal JSON
 	cppJSONBytes, err := json.Marshal(config)
 	if err != nil {
@@ -461,7 +473,7 @@ func postRequest(config wandbox.Request, save bool) bool {
 
 	file, err := os.Create(`./config.json`)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 	defer file.Close()
 
@@ -494,18 +506,18 @@ func postRequest(config wandbox.Request, save bool) bool {
 
 	switch {
 	case result.ProgramMessage != "":
-		fmt.Println(result.ProgramMessage)
+		stdout.Write([]byte(result.ProgramMessage))
 	case result.CompilerError != "":
-		fmt.Println("Compilation Error!:")
-		fmt.Println(result.CompilerError)
+		stdout.Write([]byte("Compilation Error!:"))
+		stdout.Write([]byte(result.CompilerError))
 	case result.ProgramError != "":
-		fmt.Println("Runtime Error!:")
-		fmt.Println(result.ProgramError)
+		stdout.Write([]byte("Runtime Error!:"))
+		stdout.Write([]byte(result.ProgramError))
 	}
 
 	if save {
-		fmt.Println("Permlink:", result.Permlink)
-		fmt.Println("URL:", result.URL)
+		stdout.Write([]byte("Permlink: " + result.Permlink))
+		stdout.Write([]byte("URL: " + result.URL))
 	}
 	return true
 }

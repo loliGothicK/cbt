@@ -1,0 +1,38 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/github.com/LoliGothick/cbt
+
+    environment:
+      TEST_RESULTS: /tmp/test-results
+
+    steps:
+      - checkout
+      - run: mkdir -p $TEST_RESULTS
+      - run: make preinstall
+      - run: make lint
+      - run: make build
+      - run: 
+          name: Run unit tests
+          command: |
+            trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
+            go test ./... | tee ${TEST_RESULTS}/go-test.out
+      - run: goverage -coverprofile=${TEST_RESULTS}/cover.out -covermode=count ./ast ./parse
+      - run: go tool cover -html=${TEST_RESULTS}/cover.out -o ${TEST_RESULTS}/cover.html
+      - run: make package
+      - store_artifacts:
+          path: dist
+          destination: binary
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+      - store_test_results:
+          path: /tmp/test-results
+deployment:
+  tag:
+    tag: /v[0-9]+(\.[0-9]+)*(-.*)*/
+    owner: user
+    commands:
+      - curl -sL https://git.io/goreleaser | bash

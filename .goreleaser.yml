@@ -1,0 +1,22 @@
+project_name: cbt
+
+builds:
+  - binary: cbt
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - 386
+archive:
+  format: zip
+  name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+  files:
+    - README.md
+    - LISENCE
+
+release:
+  github:
+    owner: LoliGothick
+    name: cbt
