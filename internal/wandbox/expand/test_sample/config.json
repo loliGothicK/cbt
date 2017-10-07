@@ -1,0 +1,33 @@
+{
+    "compiler": "gcc-head",
+    "code": "#include \"a.hpp\" /* origin \u003e\u003e\u003e #include \"a.hpp\" */\r\n#include \"b.hpp\" /* origin \u003e\u003e\u003e #include \"b.hpp\" */\r\n#include \"c.hpp\" /* origin \u003e\u003e\u003e #include \"c.hpp\" */\r\n#include \"d.hpp\" /* origin \u003e\u003e\u003e #include \"d.hpp\" */\r\n#include \"func.hpp\" /* origin \u003e\u003e\u003e #include \"func.hpp\" */ /* origin \u003e\u003e\u003e #include \"c.hpp\" */\r\n\r\nint main(){\r\n  return EXIT_SUCCESS;\r\n}",
+    "codes": [
+        {
+            "file": "d.hpp",
+            "code": "#define d.hpp"
+        },
+        {
+            "file": "func.hpp",
+            "code": "void func();"
+        },
+        {
+            "file": "a.hpp",
+            "code": "#define a.hpp"
+        },
+        {
+            "file": "b.hpp",
+            "code": "#define b.hpp"
+        },
+        {
+            "file": "func.cpp",
+            "code": "#include \"func.hpp\"\r\nvoid func(){}"
+        },
+        {
+            "file": "c.hpp",
+            "code": "#define c.hpp"
+        }
+    ],
+    "options": "c++14,cpp-no-pedantic,boost-nothing-gcc-head",
+    "compiler-option-raw": "func.cpp\n",
+    "save": true
+}

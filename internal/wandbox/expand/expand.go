@@ -34,12 +34,42 @@ func (ss StringSlice) Split(pred func(string) bool) (string, []string) {
 	for _, target := range ss {
 		switch {
 		case pred(target):
-			main = target
+			if abs, err := filepath.Abs(target); err != nil {
+				panic(err)
+			} else {
+				main = abs
+			}
 		default:
-			sub = append(sub, filepath.Base(target))
+			if abs, err := filepath.Abs(target); err != nil {
+				panic(err)
+			} else {
+				sub = append(sub, abs)
+			}
 		}
 	}
 	return main, sub
+}
+
+func (ss StringSlice) ToAbs() StringSlice {
+	ret := []string{}
+	for _, path := range ss {
+		abs, err := filepath.Abs(path)
+		if err != nil {
+			panic(err)
+		}
+		ret = append(ret, abs)
+	}
+	ss = ret
+	return ss
+}
+
+func (ss StringSlice) ToBase() StringSlice {
+	ret := []string{}
+	for _, path := range ss {
+		ret = append(ret, filepath.Base(path))
+	}
+	ss = ret
+	return ss
 }
 
 // ExpandInclude : Expand only included files(for one file compilation)
@@ -50,15 +80,17 @@ func ExpandInclude(file string, re string) (string, map[string]string) {
 // ExpandIncludeMulti : Expand all files(for muliple file compilation)
 func ExpandIncludeMulti(files StringSlice, re string) (string, []string, map[string]string) {
 	mre := regexp.MustCompile(`main\([\s\S]*?\){[\s\S]*?}`)
-	main, sub := files.Split(func(target string) bool {
+	var main string
+	var sub StringSlice
+	main, sub = files.ToAbs().Split(func(target string) bool {
 		src, err := ioutil.ReadFile(target)
 		if err != nil {
 			panic(err)
 		}
 		return mre.Match(src)
 	})
-	prog, headers := ExpandMulti(files, main, sub, re)
-	return prog, sub, headers
+	prog, headers := ExpandMulti(files.ToAbs(), main, sub, re)
+	return prog, sub.ToBase(), headers
 }
 
 // ExpandAll : Expand all files(for muliple file compilation)
@@ -78,7 +110,6 @@ func Expand(files []string, src string, re string) (string, map[string]string) {
 		init[file] = abs
 	}
 	object := analyzingTo(init, re)
-
 	prog := ""
 	if src != "false" {
 		abs, err := filepath.Abs(src)
@@ -105,27 +136,15 @@ func ExpandMulti(files []string, src string, sub []string, re string) (string, m
 	init := map[string]string{}
 
 	for _, file := range files {
-		abs, err := filepath.Abs(file)
-		if err != nil {
-			panic(err)
-		}
-		init[file] = abs
+		init[file] = file
 	}
 	object := analyzingTo(init, re)
-	abs, err := filepath.Abs(src)
-	if err != nil {
-		panic(err)
-	}
-	prog := object[abs]
-	delete(object, abs)
+	prog := object[src]
+	delete(object, src)
 	for _, del := range sub {
-		abs, err := filepath.Abs(del)
-		if err != nil {
-			panic(err)
-		}
-		tmp := object[abs]
-		delete(object, abs)
-		object[filepath.Base(abs)] = tmp
+		tmp := object[del]
+		delete(object, del)
+		object[filepath.Base(del)] = tmp
 	}
 	return prog, object
 }
