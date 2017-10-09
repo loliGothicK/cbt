@@ -1,0 +1,6 @@
+{
+    "compiler": "gcc-head-c",
+    "code": "#include \u003cstdio.h\u003e\r\n#include \u003cstdlib.h\u003e\r\n\r\nint main(void)\r\n{\r\n    char* in;\r\n    scanf(\"%s\", in);\r\n    printf(\"%s\\n\", in);\r\n    return EXIT_SUCCESS;\r\n}",
+    "options": "c11,cpp-no-pedanticgcc-head",
+    "stdin": "Hello, cbt!"
+}
