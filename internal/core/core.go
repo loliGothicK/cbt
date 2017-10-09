@@ -501,8 +501,8 @@ func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) *w
 	}
 
 	if save {
-		stdout.Write([]byte("Permlink: " + result.Permlink))
-		stdout.Write([]byte("URL: " + result.URL))
+		stdout.Write([]byte("\n\nPermlink: " + result.Permlink))
+		stdout.Write([]byte("\nURL: " + result.URL))
 	}
 	return result
 }
