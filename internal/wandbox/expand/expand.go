@@ -25,9 +25,9 @@ func flat(rm [][]string) []string {
 	return ret
 }
 
-type StringSlice []string
+type PathSlice []string
 
-func (ss StringSlice) Split(pred func(string) bool) (string, []string) {
+func (ss PathSlice) Split(pred func(string) bool) (string, []string) {
 	var main = ""
 	sub := []string{}
 
@@ -50,7 +50,7 @@ func (ss StringSlice) Split(pred func(string) bool) (string, []string) {
 	return main, sub
 }
 
-func (ss StringSlice) ToAbs() StringSlice {
+func (ss PathSlice) ToAbs() PathSlice {
 	ret := []string{}
 	for _, path := range ss {
 		abs, err := filepath.Abs(path)
@@ -63,7 +63,7 @@ func (ss StringSlice) ToAbs() StringSlice {
 	return ss
 }
 
-func (ss StringSlice) ToBase() StringSlice {
+func (ss PathSlice) ToBase() PathSlice {
 	ret := []string{}
 	for _, path := range ss {
 		ret = append(ret, filepath.Base(path))
@@ -78,10 +78,10 @@ func ExpandInclude(file string, re string) (string, map[string]string) {
 }
 
 // ExpandIncludeMulti : Expand all files(for muliple file compilation)
-func ExpandIncludeMulti(files StringSlice, re string) (string, []string, map[string]string) {
+func ExpandIncludeMulti(files PathSlice, re string) (string, []string, map[string]string) {
 	mre := regexp.MustCompile(`main\([\s\S]*?\){[\s\S]*?}`)
 	var main string
-	var sub StringSlice
+	var sub PathSlice
 	main, sub = files.ToAbs().Split(func(target string) bool {
 		src, err := ioutil.ReadFile(target)
 		if err != nil {

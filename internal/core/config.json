@@ -1,5 +1,0 @@
-{
-    "compiler": "gcc-head",
-    "code": "#include \u003ciostream\u003e\r\n\r\nint main(){\r\n  std::cout \u003c\u003c \"Hello, cbt!\" \u003c\u003c std::endl; \r\n}",
-    "options": "c++14,cpp-no-pedantic,boost-nothing-gcc-head"
-}

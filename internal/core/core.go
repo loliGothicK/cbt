@@ -193,15 +193,14 @@ func WandboxC(c *cli.Context) {
 	// prepare JSON struct
 	config := wandbox.Request{}
 	// prepare stdin
-	stdin := ([]byte)("")
-	if c.String("in") != "" {
-		_, err := os.Stat(c.String("in"))
-		if err == nil {
-			stdin, err = ioutil.ReadFile(c.String("in"))
-			if err != nil {
-				panic(err)
-			}
-		}
+	var stdin string
+	switch in := cutil.OrElse(c.String("in") == "", "", maybe.Expected(ioutil.ReadFile(c.String("in"))).UnwrapOr(c.String("in"))); in.(type) {
+	case []byte:
+		stdin = string(in.([]byte))
+	case string:
+		stdin = in.(string)
+	case error:
+		panic(in.(error))
 	}
 
 	// Let's Making JSON!
@@ -224,7 +223,6 @@ func WandboxC(c *cli.Context) {
 		if c.Bool("o") {
 			options += ",optimize"
 		}
-		options += c.String("x")
 		if len(c.Args()) < 2 {
 			code, codes := expand.ExpandInclude(string(c.Args().First()), `#include.*".*"|".*"/\*cbt-require\*/`)
 			// JSON configure
@@ -233,7 +231,7 @@ func WandboxC(c *cli.Context) {
 				Code:              code,
 				Codes:             wandbox.TransformToCodes(codes),
 				Options:           options,
-				Stdin:             string(stdin),
+				Stdin:             stdin,
 				CompilerOptionRaw: c.String("c"),
 				RuntimeOptionRaw:  c.String("r"),
 				Save:              c.Bool("s"),
@@ -247,7 +245,7 @@ func WandboxC(c *cli.Context) {
 				Code:              code,
 				Codes:             wandbox.TransformToCodes(codes),
 				Options:           options,
-				Stdin:             string(stdin),
+				Stdin:             stdin,
 				CompilerOptionRaw: strings.Join(src, "\n") + "\n" + c.String("c"),
 				RuntimeOptionRaw:  c.String("r"),
 				Save:              c.Bool("s"),
@@ -264,7 +262,7 @@ func WandboxC(c *cli.Context) {
 echo 'compiler:' {{.Compiler}}
 echo 'target:' {{.Target}}
 {{if .Clang}}
-/opt/wandbox/{{.Compiler}}/bin/clang {{.Target}} {{.Option}} && ./a.out{{else}}/opt/wandbox/{{.Compiler}}/bin/g++ {{.Target}} -std={{.CXX}} {{.Option}} && ./a.out{{end}}{{if .StdinFlag}} <<- EOS
+/opt/wandbox/{{.Compiler}}/bin/clang {{.Target}} {{.Option}} && ./a.out{{else}}/opt/wandbox/{{.Compiler}}/bin/gcc {{.Target}} -std={{.CXX}} {{.Option}} && ./a.out{{end}}{{if .StdinFlag}} <<- EOS
 {{.Stdin}}
 EOS{{end}}
 `
@@ -293,8 +291,8 @@ EOS{{end}}
 				CXX:       "c",
 				VER:       c.String("std")[1:],
 				Option:    options,
-				StdinFlag: string(stdin) != "",
-				Stdin:     string(stdin),
+				StdinFlag: stdin != "",
+				Stdin:     stdin,
 				Clang:     c.String("x")[0:3] != "gcc",
 			}
 			var shell = ""
@@ -389,7 +387,8 @@ func WandboxCpp(c *cli.Context) {
 	} else {
 		{ // else target is multiple src-file
 			// set target
-			target := c.Args()
+			var target expand.PathSlice
+			target = ([]string)(c.Args())
 			// code analyze
 			codes := expand.ExpandAll(target, `#include.*".*"|".*"/\*cbt-require\*/`)
 			// generate template (shell)
@@ -432,7 +431,7 @@ EOS{{end}}
 			tmpl := template.Must(template.New("bash").Parse(shell_tmpl))
 			bash := &wandbox.Bash{
 				Compiler:  c.String("x"),
-				Target:    strings.Join(target, " "),
+				Target:    strings.Join(target.ToBase(), " "),
 				CXX:       cxx[0],
 				VER:       cxx[1],
 				Option:    options,
@@ -458,7 +457,7 @@ EOS{{end}}
 	postRequest(config, c.Bool("s"), c.App.Writer, c.App.ErrWriter)
 }
 
-func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) bool {
+func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) *wandbox.Result {
 	// Marshal JSON
 	cppJSONBytes, err := json.Marshal(config)
 	if err != nil {
@@ -472,8 +471,6 @@ func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) bo
 		panic(err)
 	}
 	defer file.Close()
-
-	file.Write(([]byte)(out.String()))
 
 	// Client : Wait Time 30s
 	client := &http.Client{Timeout: time.Duration(30) * time.Second}
@@ -497,7 +494,7 @@ func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) bo
 	}
 	result := new(wandbox.Result)
 	if err := json.Unmarshal(([]byte)(body), result); err != nil {
-		panic(err)
+		panic(fmt.Errorf(`%s:\n%s`, err.Error(), body))
 	}
 
 	switch {
@@ -515,7 +512,7 @@ func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) bo
 		stdout.Write([]byte("Permlink: " + result.Permlink))
 		stdout.Write([]byte("URL: " + result.URL))
 	}
-	return true
+	return result
 }
 
 func SolutionInitial(c *cli.Context) {

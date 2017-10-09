@@ -12,7 +12,20 @@ import (
 
 func TestWandboxCpp(t *testing.T) {
 	cases := []test.TestPattern{
-		{In: `cbt wandbox cpp ./test_samples/cpp/simple_test.cpp`, Out: `Hello, cbt`, Err: nil},
+		{In: `cbt wandbox cpp ./test_samples/cpp/simple_test.cpp -x=clang-head -w -v -o --msgpack --boost="1.65.1"`, Out: `Hello, cbt`, Err: nil},
+	}
+	for _, test := range cases {
+		out, err := core.NewCLI().TestRun(strings.Split(test.In, " "))
+		if !regexp.MustCompile(test.Out).Match(out) || !reflect.DeepEqual(test.Err, err) {
+			t.Errorf("cbt (%q)\nout: %v, %v\nrequire: %v, %v",
+				test.In, string(out), err, test.Out, test.Err)
+		}
+	}
+}
+
+func TestWandboxCppBash(t *testing.T) {
+	cases := []test.TestPattern{
+		{In: `cbt wandbox cpp ./test_samples/cpp/simple_test.cpp -bash -w -v -o -msgpack -boost=1.65.1 -s`, Out: `Hello, cbt`, Err: nil},
 	}
 	for _, test := range cases {
 		out, err := core.NewCLI().TestRun(strings.Split(test.In, " "))
