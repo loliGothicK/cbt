@@ -254,7 +254,8 @@ func WandboxC(c *cli.Context) {
 	} else {
 		{ // else target is multiple src-file
 			// set target
-			target := c.Args()
+			var target expand.PathSlice
+			target = ([]string)(c.Args())
 			// code analyze
 			codes := expand.ExpandAll(target, `#include.*".*"|".*"/\*cbt-require\*/`)
 			// generate template (shell)
@@ -262,7 +263,7 @@ func WandboxC(c *cli.Context) {
 echo 'compiler:' {{.Compiler}}
 echo 'target:' {{.Target}}
 {{if .Clang}}
-/opt/wandbox/{{.Compiler}}/bin/clang {{.Target}} {{.Option}} && ./a.out{{else}}/opt/wandbox/{{.Compiler}}/bin/gcc {{.Target}} -std={{.CXX}} {{.Option}} && ./a.out{{end}}{{if .StdinFlag}} <<- EOS
+/opt/wandbox/{{.Compiler}}/bin/clang {{.Target}} {{.Option}} && ./a.out{{else}}/opt/wandbox/{{.Compiler}}/bin/gcc {{.Target}} -std={{.VER}} {{.Option}} && ./a.out{{end}}{{if .StdinFlag}} <<- EOS
 {{.Stdin}}
 EOS{{end}}
 `
@@ -286,10 +287,9 @@ EOS{{end}}
 
 			tmpl := template.Must(template.New("bash").Parse(shell_tmpl))
 			bash := &wandbox.Bash{
-				Compiler:  c.String("x") + "-c",
-				Target:    strings.Join(target, " "),
-				CXX:       "c",
-				VER:       c.String("std")[1:],
+				Compiler:  c.String("x"),
+				Target:    strings.Join(target.ToBase(), " "),
+				VER:       c.String("std"),
 				Option:    options,
 				StdinFlag: stdin != "",
 				Stdin:     stdin,
@@ -465,12 +465,6 @@ func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) *w
 	}
 	out := new(bytes.Buffer)
 	json.Indent(out, cppJSONBytes, "", "    ") // pretty
-
-	file, err := os.Create(`./config.json`)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
 
 	// Client : Wait Time 30s
 	client := &http.Client{Timeout: time.Duration(30) * time.Second}

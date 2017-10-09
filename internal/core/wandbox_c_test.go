@@ -12,7 +12,15 @@ import (
 
 func TestWandboxC(t *testing.T) {
 	cases := []test.TestPattern{
-		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=clang-head -w -v`, Out: `Hello, cbt`, Err: nil},
+		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=clang-head`, Out: `Hello, cbt`, Err: nil},
+		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=clang-head -w`, Out: `Hello, cbt`, Err: nil},
+		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=clang-head -v`, Out: `Hello, cbt`, Err: nil},
+		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=clang-head -p=no`, Out: `Hello, cbt`, Err: nil},
+		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=clang-head -p=yes`, Out: `Hello, cbt`, Err: nil},
+		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=clang-head -p=errors`, Out: `no newline at end of file`, Err: nil},
+		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=clang-head -o`, Out: `Hello, cbt`, Err: nil},
+		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=clang-head -bash -s`, Out: `Hello, cbt`, Err: nil},
+		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=gcc-head -bash`, Out: `Hello, cbt`, Err: nil},
 	}
 	for _, test := range cases {
 		out, err := core.NewCLI().TestRun(strings.Split(test.In, " "))
