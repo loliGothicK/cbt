@@ -4,7 +4,7 @@ builds:
   - binary: cbt
     goos:
       - windows
-      - darwin
+      # - darwin
       - linux
     goarch:
       - amd64
