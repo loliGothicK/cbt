@@ -14,7 +14,6 @@ archive:
   name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
   files:
     - README.md
-    - LISENCE
 
 release:
   github:
