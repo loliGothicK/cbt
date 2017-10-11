@@ -1,10 +1,12 @@
-# cbt (Cranberries Build Tool)
+# cbt (Cranberries Build Tool Version 0.1.0)
 
-Build Tool for C++
+Build Tool for C/C++
 
-# cbt wandbox
+# Usage
 
-'cbt wandbox' command allows to send your C++ codes to wandbox.
+## cbt wandbox
+
+'cbt wandbox' command allows to send your C/C++ codes to wandbox and show program result.
 
 ```cpp
 // hello.cpp
@@ -16,6 +18,6 @@ int main(){
 ```
 
 ```
-$ cbt wandbox hello.cpp
+$ cbt wandbox cpp hello.cpp
 hello cbt!
 ```
