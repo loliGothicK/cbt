@@ -6,7 +6,9 @@ Build Tool for C/C++
 
 ## cbt wandbox
 
-'cbt wandbox' command allows to send your C/C++ codes to wandbox and show program result.
+'cbt wandbox' command allows to send your codes to wandbox and show program result.
+
+Example
 
 ```cpp
 // hello.cpp
@@ -21,3 +23,11 @@ int main(){
 $ cbt wandbox cpp hello.cpp
 hello cbt!
 ```
+
+## Support Languages
+
+- C
+
+- C++
+
+- Golang
