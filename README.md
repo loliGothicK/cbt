@@ -1,4 +1,4 @@
-# cbt (Cranberries Build Tool Version 0.1.0)
+# cbt (Cranberries Build Tool Version 0.2.0)
 
 Build Tool for C/C++
 
