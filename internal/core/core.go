@@ -139,6 +139,28 @@ func NewCLI() *CLI {
 						},
 					},
 				},
+				{
+					Name:   "go",
+					Usage:  "Go Language",
+					Action: WandboxGo,
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "compiler, x",
+							Value: "go-head",
+						},
+						cli.StringFlag{
+							Name:  "compile-option, c",
+							Value: "",
+						},
+						cli.StringFlag{
+							Name:  "runtime-option, r",
+							Value: "",
+						},
+						cli.BoolFlag{
+							Name: "save, s",
+						},
+					},
+				},
 			},
 		},
 		{
@@ -452,6 +474,37 @@ EOS{{end}}
 			}
 		}
 	}
+	postRequest(config, c.Bool("s"), c.App.Writer, c.App.ErrWriter)
+}
+
+func WandboxGo(c *cli.Context) {
+	// preprocessing
+
+	// prepare JSON struct
+	config := wandbox.Request{}
+	// prepare stdin
+	var stdin string
+	switch in := cutil.OrElse(c.String("in") == "", "", maybe.Expected(ioutil.ReadFile(c.String("in"))).UnwrapOr(c.String("in"))); in.(type) {
+	case []byte:
+		stdin = string(in.([]byte))
+	case string:
+		stdin = in.(string)
+	case error:
+		panic(in.(error))
+	}
+
+	code, codes := expand.ExpandGo(string(c.Args().First()))
+	// JSON configure
+	config = wandbox.Request{
+		Compiler:          c.String("x"),
+		Code:              code,
+		Codes:             wandbox.TransformToCodes(codes),
+		Stdin:             stdin,
+		CompilerOptionRaw: c.String("c"),
+		RuntimeOptionRaw:  c.String("r"),
+		Save:              c.Bool("s"),
+	}
+
 	postRequest(config, c.Bool("s"), c.App.Writer, c.App.ErrWriter)
 }
 

@@ -3,10 +3,15 @@
 package expand
 
 import (
+	"fmt"
+	"go/build"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/LoliGothick/freyja/maybe"
 )
 
 func unique(path string, m map[string]string) string {
@@ -14,15 +19,6 @@ func unique(path string, m map[string]string) string {
 		path = "_" + path
 	}
 	return path
-}
-
-func flat(rm [][]string) []string {
-	ret := []string{}
-	for _, s := range rm {
-		str := strings.Join(s, "")
-		ret = append(ret, str[strings.Index(str, "\"")+1:strings.LastIndex(str, "\"")])
-	}
-	return ret
 }
 
 type PathSlice []string
@@ -196,4 +192,117 @@ BACKTRACING:
 	}
 
 	return mapCodes
+}
+
+func GOPATH() (*regexp.Regexp, *regexp.Regexp) {
+	var ret []string
+	var reg []string
+	for _, path := range filepath.SplitList(build.Default.GOPATH) {
+		switch dir := maybe.Expected(ioutil.ReadDir(path + `/src/`)).Interface(); dir.(type) {
+		case []os.FileInfo:
+			for _, m := range dir.([]os.FileInfo) {
+				ret = append(ret, `"(`+m.Name()+`/.*)"`)
+				reg = append(reg, regexp.QuoteMeta(path)+`(.*)`)
+			}
+		case error:
+			panic(dir.(error))
+		}
+	}
+	return regexp.MustCompile(strings.Join(ret, `|`)), regexp.MustCompile(strings.Join(reg, `|`))
+}
+
+func ReadDirEx(match string) ([]os.FileInfo, error) {
+
+	for _, path := range filepath.SplitList(build.Default.GOPATH) {
+		prevDir, _ := filepath.Abs(".")
+		os.Chdir(path)
+		files, err := ioutil.ReadDir(build.Default.GOPATH + `/src/` + match + `/`)
+		os.Chdir(prevDir)
+		if err == nil {
+			return files, nil
+		}
+	}
+	return nil, fmt.Errorf(`%s`, `path not found!`)
+}
+
+func ReadFileEx(match, name string) ([]byte, error) {
+
+	for _, path := range filepath.SplitList(build.Default.GOPATH) {
+		prevDir, _ := filepath.Abs(".")
+		os.Chdir(path)
+		files, err := ioutil.ReadFile(build.Default.GOPATH + `/src/` + match + `/` + name)
+		os.Chdir(prevDir)
+		if err == nil {
+			return files, nil
+		}
+	}
+	return nil, fmt.Errorf(`%s`, `path not found!`)
+}
+
+func ExpandGo(t string) (string, map[string]string) {
+	regex, gopath := GOPATH()
+	mapCodes := map[string]string{}
+	target := []string{}
+	rest := []string{}
+	req := regexp.MustCompile("(\"|`)(.*)(\"|`).*" + regexp.QuoteMeta(`/*cbt-require*/`))
+
+	switch b := maybe.Expected(ioutil.ReadFile(t)).Map(func(src []byte) bool {
+		for _, opt := range req.FindAllStringSubmatch(string(src), -1) {
+			mapCodes[opt[2]] = string(maybe.Expected(ioutil.ReadFile(opt[2])).Interface().([]byte))
+		}
+		for _, match := range regex.FindAllStringSubmatch(string(src), -1) {
+			files, err := ReadDirEx(match[1])
+			if err != nil {
+				panic(err)
+			}
+			for _, f := range files {
+				s, _ := ReadFileEx(match[1], f.Name())
+				if regexp.MustCompile(`package ` + filepath.Base(match[1])).Match(s) {
+					rest = append(rest, build.Default.GOPATH+`/src/`+match[1]+`/`+f.Name())
+				}
+			}
+		}
+		return true
+	}).Interface(); b.(type) {
+	case bool:
+	case error:
+		panic(b.(error))
+	}
+	by, _ := ioutil.ReadFile(t)
+	main := (string)(by)
+
+BACKTRACING:
+	for _, pack := range target {
+		switch b := maybe.Expected(ioutil.ReadFile(pack)).Map(func(src []byte) bool {
+			// for _, opt := range req.FindAllStringSubmatch(string(src), -1) {
+			// 	fmt.Println(opt[2])
+			// 	mapCodes[opt[2]] = string(maybe.Expected(ioutil.ReadFile(opt[2])).Interface().([]byte))
+			// }
+			for _, match := range regex.FindAllStringSubmatch(string(src), -1) {
+				files, err := ReadDirEx(match[1])
+				if err != nil {
+					panic(err)
+				}
+				for _, f := range files {
+					s, _ := ReadFileEx(match[1], f.Name())
+					if regexp.MustCompile(`package ` + filepath.Base(match[1])).Match(s) {
+						rest = append(rest, build.Default.GOPATH+`/src/`+match[1]+`/`+f.Name())
+					}
+				}
+			}
+
+			mapCodes[string(gopath.ReplaceAll(([]byte)(pack), ([]byte)(`go$1`)))] = string(src)
+			return true
+		}).Interface(); b.(type) {
+		case bool:
+		case error:
+			panic(b.(error))
+		}
+	}
+	if len(rest) != 0 {
+		target = rest
+		rest = []string{}
+		goto BACKTRACING
+	}
+	return main, mapCodes
 }
