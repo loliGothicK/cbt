@@ -1,6 +1,6 @@
 # cbt (Cranberries Build Tool Version 0.2.0)
 
-Build Tool for C/C++
+CLI Build Tool
 
 # Usage
 
