@@ -31,3 +31,7 @@ hello cbt!
 - C++
 
 - Golang
+
+## Never Support Languages
+
+- Java
