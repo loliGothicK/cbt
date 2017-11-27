@@ -17,6 +17,7 @@ import (
 	"github.com/LoliGothick/cbt/internal/wandbox/expand"
 	"github.com/LoliGothick/freyja/cutil"
 	"github.com/LoliGothick/freyja/maybe"
+	"github.com/mattn/go-colorable"
 	"github.com/urfave/cli"
 )
 
@@ -28,14 +29,14 @@ func NewCLI() *CLI {
 	_cli := new(CLI)
 
 	app := cli.NewApp()
-	app.Name = "cbt (Cranberries Build Tool)"
-	app.Usage = "C++ Build Tool"
-	app.Version = "0.0.1"
+	app.Name = "cbt"
+	app.Usage = "Build Tool Wandbox"
+	app.Version = "0.3.0"
 	app.Commands = []cli.Command{
 		{
 			Name:    "wandbox",
 			Aliases: []string{"wb"},
-			Usage:   "Send your codes to wandbox",
+			Usage:   "Sending local codes to wandbox",
 			Subcommands: []cli.Command{
 				{
 					Name:   "cpp",
@@ -44,120 +45,145 @@ func NewCLI() *CLI {
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "compiler, x",
+							Usage: "specify C++ compiler [fmt: gcc-x.x.x, clang-x.x.x or zapcc]",
 							Value: "gcc-head",
 						},
 						cli.StringFlag{
 							Name:  "std",
+							Usage: "specify C++ version [fmt: c++** or gnu++**]",
 							Value: "c++14",
 						},
 						cli.StringFlag{
 							Name:  "stdin,in",
+							Usage: "specify stadard input [text or file both accept]",
 							Value: "",
 						},
 						cli.BoolFlag{
-							Name: "warning, w",
+							Name:  "warning, w",
+							Usage: `enable warning options [warning means "-Wall -Wextra"]`,
 						},
 						cli.StringFlag{
 							Name:  "pedantic, p",
+							Usage: "specify pedantic option [no(default), yes or eoors]",
 							Value: "no",
 						},
 						cli.BoolFlag{
-							Name: "verbose, v",
+							Name:  "verbose, v",
+							Usage: "enable verbose option",
 						},
 						cli.BoolFlag{
-							Name: "optimize, o",
+							Name:  "optimize, o",
+							Usage: `enable optimize options [optimize means "-O2 -march=native"]`,
 						},
 						cli.BoolFlag{
-							Name: "sprout",
+							Name:  "sprout",
+							Usage: "enable sprout library",
 						},
 						cli.StringFlag{
 							Name:  "boost",
+							Usage: "specify boost library version [fmt: boost-xxx]",
 							Value: "nothing",
 						},
 						cli.BoolFlag{
-							Name: "msgpack, m",
+							Name:  "msgpack, m",
+							Usage: "enable massage pack",
 						},
 						cli.StringFlag{
 							Name:  "compile-option, c",
+							Usage: "specify compile options",
 							Value: "",
 						},
 						cli.StringFlag{
 							Name:  "runtime-option, r",
+							Usage: "specify runtime options",
 							Value: "",
 						},
 						cli.BoolFlag{
-							Name: "save, s",
+							Name:  "save, s",
+							Usage: "publishing permanent link",
 						},
 						cli.BoolFlag{
-							Name: "bash",
+							Name:  "bash",
+							Usage: "Secret",
 						},
 					},
 				},
 				{
 					Name:   "c",
-					Usage:  "C Language",
+					Usage:  "C",
 					Action: WandboxC,
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "compiler, x",
+							Usage: "specify C++ compiler [fmt: gcc-x.x.x or clang-x.x.x]",
 							Value: "gcc-head",
 						},
 						cli.StringFlag{
 							Name:  "std",
+							Usage: "specify C++ version [c89, gnu89, c99, gnu99, c11(default), or gnu11]",
 							Value: "c11",
 						},
 						cli.StringFlag{
 							Name:  "stdin,in",
+							Usage: "specify stadard input [text or file both accept]",
 							Value: "",
 						},
 						cli.BoolFlag{
-							Name: "warning, w",
+							Name:  "warning, w",
+							Usage: `enable warning options [warning means "-Wall -Wextra"]`,
 						},
 						cli.StringFlag{
 							Name:  "pedantic, p",
+							Usage: "specify pedantic option [no(default), yes or eoors]",
 							Value: "no",
 						},
 						cli.BoolFlag{
-							Name: "verbose, v",
-						},
-						cli.BoolFlag{
-							Name: "optimize, o",
+							Name:  "verbose, v",
+							Usage: "enable verbose option",
 						},
 						cli.StringFlag{
 							Name:  "compile-option, c",
+							Usage: "specify compile options",
 							Value: "",
 						},
 						cli.StringFlag{
 							Name:  "runtime-option, r",
+							Usage: "specify runtime options",
 							Value: "",
 						},
 						cli.BoolFlag{
-							Name: "save, s",
+							Name:  "save, s",
+							Usage: "publishing permanent link",
 						},
 						cli.BoolFlag{
-							Name: "bash",
+							Name:  "bash",
+							Usage: "Secret",
 						},
 					},
 				},
 				{
 					Name:   "go",
-					Usage:  "Go Language",
+					Usage:  "Go",
 					Action: WandboxGo,
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "compiler, x",
+							Usage: "specify Go version [fmt: go-x.x]",
 							Value: "go-head",
 						},
 						cli.StringFlag{
 							Name:  "compile-option, c",
+							Usage: "specify compiler options",
 							Value: "",
 						},
 						cli.StringFlag{
 							Name:  "runtime-option, r",
+							Usage: "specify runtime options",
 							Value: "",
 						},
 						cli.BoolFlag{
-							Name: "save, s",
+							Name:  "save, s",
+							Usage: "publishing permanent link",
 						},
 					},
 				},
@@ -196,6 +222,7 @@ func NewCLI() *CLI {
 }
 
 func (_cli *CLI) Run() {
+	_cli.app.Writer = colorable.NewColorableStdout()
 	_cli.app.Run(os.Args)
 }
 
@@ -546,13 +573,14 @@ func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) *w
 	case result.ProgramMessage != "":
 		stdout.Write([]byte(result.ProgramMessage))
 	case result.CompilerError != "":
+		stdout.Write([]byte("\033[31m"))
 		stdout.Write([]byte("Compilation Error!:"))
 		stdout.Write([]byte(result.CompilerError))
 	case result.ProgramError != "":
 		stdout.Write([]byte("Runtime Error!:"))
 		stdout.Write([]byte(result.ProgramError))
 	}
-
+	stdout.Write([]byte("\033[0m"))
 	if save {
 		stdout.Write([]byte("\n\nPermlink: " + result.Permlink))
 		stdout.Write([]byte("\nURL: " + result.URL))
