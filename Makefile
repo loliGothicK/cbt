@@ -13,6 +13,7 @@ preinstall:
 	go get github.com/LoliGothick/freyja/cutil
 	go get github.com/LoliGothick/freyja/maybe
 	go get github.com/LoliGothick/freyja/set
+	go get github.com/mattn/go-colorable
 
 
 status:

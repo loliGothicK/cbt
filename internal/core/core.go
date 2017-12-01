@@ -55,7 +55,7 @@ func NewCLI() *CLI {
 						},
 						cli.StringFlag{
 							Name:  "stdin,in",
-							Usage: "specify stadard input [text or file both accept]",
+							Usage: "specify standard input [text or file both accept]",
 							Value: "",
 						},
 						cli.BoolFlag{
@@ -125,7 +125,7 @@ func NewCLI() *CLI {
 						},
 						cli.StringFlag{
 							Name:  "stdin,in",
-							Usage: "specify stadard input [text or file both accept]",
+							Usage: "specify standard input [text or file both accept]",
 							Value: "",
 						},
 						cli.BoolFlag{
@@ -179,6 +179,11 @@ func NewCLI() *CLI {
 						cli.StringFlag{
 							Name:  "runtime-option, r",
 							Usage: "specify runtime options",
+							Value: "",
+						},
+						cli.StringFlag{
+							Name:  "stdin,in",
+							Usage: "specify standard input [text or file both accept]",
 							Value: "",
 						},
 						cli.BoolFlag{
