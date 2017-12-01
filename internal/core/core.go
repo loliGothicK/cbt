@@ -141,6 +141,10 @@ func NewCLI() *CLI {
 							Name:  "verbose, v",
 							Usage: "enable verbose option",
 						},
+						cli.BoolFlag{
+							Name:  "optimize, o",
+							Usage: "enable optimize option",
+						},
 						cli.StringFlag{
 							Name:  "compile-option, c",
 							Usage: "specify compile options",
