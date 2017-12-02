@@ -12,6 +12,7 @@ import (
 
 func TestWandboxC(t *testing.T) {
 	cases := []test.TestPattern{
+		{In: `cbt wandbox c ./test_samples/c/multi.c ./test_samples/c/func.c -x=clang-4.0.0`, Out: `Hello, cbt`, Err: nil},
 		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=clang-head -s`, Out: `Hello, cbt`, Err: nil},
 		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=clang-head -w`, Out: `Hello, cbt`, Err: nil},
 		{In: `cbt wandbox c ./test_samples/c/simple_test.c -x=clang-head -v`, Out: `Hello, cbt`, Err: nil},

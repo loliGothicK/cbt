@@ -12,6 +12,7 @@ import (
 
 func TestWandboxCpp(t *testing.T) {
 	cases := []test.TestPattern{
+		{In: `cbt wandbox cpp ./test_samples/cpp/multi.cpp ./test_samples/cpp/func.cpp`, Out: `Hello, cbt`, Err: nil},
 		{In: `cbt wandbox cpp ./test_samples/cpp/simple_test.cpp`, Out: `Hello, cbt`, Err: nil},
 		{In: `cbt wandbox cpp ./test_samples/cpp/simple_test.cpp -x=clang-head`, Out: `Hello, cbt`, Err: nil},
 		{In: `cbt wandbox cpp ./test_samples/cpp/simple_test.cpp -w`, Out: `Hello, cbt`, Err: nil},
