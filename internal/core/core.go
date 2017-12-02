@@ -176,11 +176,6 @@ func NewCLI() *CLI {
 							Value: "go-head",
 						},
 						cli.StringFlag{
-							Name:  "compile-option, c",
-							Usage: "specify compiler options",
-							Value: "",
-						},
-						cli.StringFlag{
 							Name:  "runtime-option, r",
 							Usage: "specify runtime options",
 							Value: "",
@@ -532,13 +527,12 @@ func WandboxGo(c *cli.Context) {
 	code, codes := expand.ExpandGo(string(c.Args().First()))
 	// JSON configure
 	config = wandbox.Request{
-		Compiler:          c.String("x"),
-		Code:              code,
-		Codes:             wandbox.TransformToCodes(codes),
-		Stdin:             stdin,
-		CompilerOptionRaw: c.String("c"),
-		RuntimeOptionRaw:  c.String("r"),
-		Save:              c.Bool("s"),
+		Compiler:         c.String("x"),
+		Code:             code,
+		Codes:            wandbox.TransformToCodes(codes),
+		Stdin:            stdin,
+		RuntimeOptionRaw: c.String("r"),
+		Save:             c.Bool("s"),
 	}
 
 	postRequest(config, c.Bool("s"), c.App.Writer, c.App.ErrWriter)
