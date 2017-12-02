@@ -12,10 +12,10 @@ import (
 
 func TestWandboxGo(t *testing.T) {
 	cases := []test.TestPattern{
-		{In: `cbt wandbox go ./test_samples/go/simple.go`, Out: `Hello, cbt`, Err: nil},
-		{In: `cbt wandbox go ./test_samples/go/simple.go -x=go-1.9`, Out: `Hello, cbt`, Err: nil},
-		{In: `cbt wandbox go ./test_samples/go/runtime_option.go -r="hoge"`, Out: `hoge`, Err: nil},
-		{In: `cbt wandbox go ./test_samples/go/stdin.go -in="hoge"`, Out: `hoge`, Err: nil},
+		{In: `cbt wandbox go ./test_samples/go/simple`, Out: `Hello, cbt`, Err: nil},
+		{In: `cbt wandbox go ./test_samples/go/simple -x=go-1.9`, Out: `Hello, cbt`, Err: nil},
+		{In: `cbt wandbox go ./test_samples/go/runtime_option -r="hoge"`, Out: `hoge`, Err: nil},
+		{In: `cbt wandbox go ./test_samples/go/stdin -in="hoge"`, Out: `hoge`, Err: nil},
 	}
 	for _, test := range cases {
 		out, err := core.NewCLI().TestRun(strings.Split(test.In, " "))
