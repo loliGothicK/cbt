@@ -1,4 +1,4 @@
-# cbt (Cranberries Build Tool Version 0.2.0) [![CircleCI](https://circleci.com/gh/LoliGothick/cbt/tree/master.svg?style=svg)](https://circleci.com/gh/LoliGothick/cbt/tree/master)
+# cbt (Cranberries Build Tool Version 0.3.2) [![CircleCI](https://circleci.com/gh/LoliGothick/cbt/tree/master.svg?style=svg)](https://circleci.com/gh/LoliGothick/cbt/tree/master)
 
 CLI Build Tool
 
