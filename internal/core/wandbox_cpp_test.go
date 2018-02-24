@@ -26,7 +26,6 @@ func TestWandboxCpp(t *testing.T) {
 		{In: `cbt wandbox cpp ./test_samples/cpp/simple_test.cpp -p=no -bash`, Out: `Hello, cbt`, Err: nil},
 		{In: `cbt wandbox cpp ./test_samples/cpp/simple_test.cpp -p=yes -bash`, Out: `Hello, cbt`, Err: nil},
 		{In: `cbt wandbox cpp ./test_samples/cpp/simple_test.cpp -p=errors -bash`, Out: `Hello, cbt`, Err: nil},
-		{In: `cbt wandbox cpp ./test_samples/cpp/simple_test.cpp -x=clang-head -w -v -o -msgpack -boost=1.65.1 -p=errors -bash`, Out: `no newline`, Err: nil},
 	}
 	for _, test := range cases {
 		out, err := core.NewCLI().TestRun(strings.Split(test.In, " "))

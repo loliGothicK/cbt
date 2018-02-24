@@ -81,7 +81,7 @@ func NewCLI() *CLI {
 						},
 						cli.StringFlag{
 							Name:  "boost",
-							Usage: "specify boost library version [fmt: boost-xxx]",
+							Usage: "specify boost library version [fmt: x.xx.x]",
 							Value: "nothing",
 						},
 						cli.BoolFlag{
@@ -174,6 +174,32 @@ func NewCLI() *CLI {
 							Name:  "compiler, x",
 							Usage: "specify Go version [fmt: go-x.x]",
 							Value: "go-head",
+						},
+						cli.StringFlag{
+							Name:  "runtime-option, r",
+							Usage: "specify runtime options",
+							Value: "",
+						},
+						cli.StringFlag{
+							Name:  "stdin,in",
+							Usage: "specify standard input [text or file both accept]",
+							Value: "",
+						},
+						cli.BoolFlag{
+							Name:  "save, s",
+							Usage: "publishing permanent link",
+						},
+					},
+				},
+				{
+					Name:   "ruby",
+					Usage:  "Ruby",
+					Action: WandboxRuby,
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "compiler, x",
+							Usage: "specify Go version [fmt: ruby-x.x or mruby-x.x]",
+							Value: "ruby-head",
 						},
 						cli.StringFlag{
 							Name:  "runtime-option, r",
@@ -537,6 +563,41 @@ func WandboxGo(c *cli.Context) {
 
 	postRequest(config, c.Bool("s"), c.App.Writer, c.App.ErrWriter)
 }
+
+func WandboxRuby(c *cli.Context) {
+	// preprocessing
+
+	// prepare JSON struct
+	config := wandbox.Request{}
+	// prepare stdin
+	var stdin string
+	switch in := cutil.OrElse(c.String("in") == "", "", maybe.Expected(ioutil.ReadFile(c.String("in"))).UnwrapOr(c.String("in"))); in.(type) {
+	case []byte:
+		stdin = string(in.([]byte))
+	case string:
+		stdin = in.(string)
+	case error:
+		panic(in.(error))
+	}
+
+	// Let's Making JSON!
+		if len(c.Args()) < 2 {
+			code, codes := expand.ExpandRubyRequire(string(c.Args().First()), `require.*'.*'`)
+			// JSON configure
+			config = wandbox.Request{
+				Compiler:          c.String("x"),
+				Code:              code,
+				Codes:             wandbox.TransformToCodes(codes),
+				Stdin:             stdin,
+				RuntimeOptionRaw:  c.String("r"),
+				Save:              c.Bool("s"),
+			}
+		}
+
+	postRequest(config, c.Bool("s"), c.App.Writer, c.App.ErrWriter)
+}
+
+
 
 func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) *wandbox.Result {
 	// Marshal JSON

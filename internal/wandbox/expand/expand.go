@@ -73,6 +73,11 @@ func ExpandInclude(file string, re string) (string, map[string]string) {
 	return Expand([]string{file}, file, re)
 }
 
+func ExpandRubyRequire(file string, re string) (string, map[string]string) {
+	return ExpandRuby([]string{file}, file, re)
+}
+
+
 // ExpandIncludeMulti : Expand all files(for muliple file compilation)
 func ExpandIncludeMulti(files PathSlice, re string) (string, []string, map[string]string) {
 	mre := regexp.MustCompile(`main\([\s\S]*?\){[\s\S]*?}`)
@@ -145,6 +150,39 @@ func ExpandMulti(files []string, src string, sub []string, re string) (string, m
 	return prog, object
 }
 
+func ExpandRuby(files []string, src string, re string) (string, map[string]string) {
+	init := map[string]string{}
+
+	for _, file := range files {
+		abs, err := filepath.Abs(file)
+		if err != nil {
+			panic(err)
+		}
+		init[file] = abs
+	}
+	object := analyzingToRuby(init, re)
+	prog := ""
+	if src != "false" {
+		abs, err := filepath.Abs(src)
+		if err != nil {
+			panic(err)
+		}
+		prog = object[abs]
+		delete(object, abs)
+	} else {
+		for _, cpp := range files {
+			abs, err := filepath.Abs(cpp)
+			if err != nil {
+				panic(err)
+			}
+			tmp := object[abs]
+			delete(object, abs)
+			object[filepath.Base(abs)] = tmp
+		}
+	}
+	return prog, object
+}
+
 func analyzingTo(files map[string]string, re string) map[string]string {
 	regex := regexp.MustCompile(re)
 	rest := map[string]string{}
@@ -164,9 +202,60 @@ BACKTRACING:
 			mapCodes[rename] = string(src)
 			continue
 		} else {
+			pathRegex := regexp.MustCompile(`['|"](.*)['|"]`)
 			for _, include := range matched {
 				str := strings.Join(include, "")
-				path := str[strings.Index(str, "\"")+1 : strings.LastIndex(str, "\"")]
+				path := pathRegex.FindAllStringSubmatch(str, 1)[0][1]
+				next := filepath.Join(dir, path)
+				absNext, err := filepath.Abs(next)
+				if err != nil {
+					panic(err)
+				}
+				if _, ok := mapPath[absNext]; ok {
+					src = regexp.MustCompile(regexp.QuoteMeta(path)).ReplaceAll(src, ([]byte)(mapPath[absNext]))
+					continue
+				} else {
+					xtRename := unique(filepath.Base(path), mapCodes)
+					mapPath[absNext] = xtRename
+					rest[next] = xtRename
+					src = regexp.MustCompile(regexp.QuoteMeta(path+`"`)).ReplaceAll(src, ([]byte)(xtRename+`" /* origin >>> `+strings.Join(include, "")+" */"))
+				}
+			}
+			mapCodes[rename] = string(src)
+		}
+	}
+	if len(rest) != 0 {
+		target = rest
+		rest = make(map[string]string)
+		goto BACKTRACING
+	}
+
+	return mapCodes
+}
+
+func analyzingToRuby(files map[string]string, re string) map[string]string {
+	regex := regexp.MustCompile(re)
+	rest := map[string]string{}
+	mapCodes := map[string]string{}
+	mapPath := map[string]string{}
+	target := files
+BACKTRACING:
+	for file, rename := range target {
+		mapCodes[rename] = ""
+		dir := filepath.Dir(file)
+		src, err := ioutil.ReadFile(file)
+		if err != nil {
+			panic(err)
+		}
+		matched := regex.FindAllStringSubmatch(string(src), -1)
+		if len(matched) == 0 {
+			mapCodes[rename] = string(src)
+			continue
+		} else {
+			pathRegex := regexp.MustCompile(`['|"](.*)['|"]`)
+			for _, include := range matched {
+				str := strings.Join(include, "")
+				path := pathRegex.FindAllStringSubmatch(str, 1)[0][1] + ".rb"
 				next := filepath.Join(dir, path)
 				absNext, err := filepath.Abs(next)
 				if err != nil {
