@@ -77,7 +77,6 @@ func ExpandRubyRequire(file string, re string) (string, map[string]string) {
 	return ExpandRuby([]string{file}, file, re)
 }
 
-
 // ExpandIncludeMulti : Expand all files(for muliple file compilation)
 func ExpandIncludeMulti(files PathSlice, re string) (string, []string, map[string]string) {
 	mre := regexp.MustCompile(`main\([\s\S]*?\){[\s\S]*?}`)
@@ -190,8 +189,8 @@ func analyzingTo(files map[string]string, re string) map[string]string {
 	mapPath := map[string]string{}
 	target := files
 BACKTRACING:
-	for file, rename := range target {
-		mapCodes[rename] = ""
+	for file, renamed := range target {
+		mapCodes[renamed] = ""
 		dir := filepath.Dir(file)
 		src, err := ioutil.ReadFile(file)
 		if err != nil {
@@ -199,7 +198,7 @@ BACKTRACING:
 		}
 		matched := regex.FindAllStringSubmatch(string(src), -1)
 		if len(matched) == 0 {
-			mapCodes[rename] = string(src)
+			mapCodes[renamed] = string(src)
 			continue
 		} else {
 			pathRegex := regexp.MustCompile(`['|"](.*)['|"]`)
@@ -216,12 +215,13 @@ BACKTRACING:
 					continue
 				} else {
 					xtRename := unique(filepath.Base(path), mapCodes)
+					mapCodes[xtRename] = ""
 					mapPath[absNext] = xtRename
 					rest[next] = xtRename
 					src = regexp.MustCompile(regexp.QuoteMeta(path+`"`)).ReplaceAll(src, ([]byte)(xtRename+`" /* origin >>> `+strings.Join(include, "")+" */"))
 				}
 			}
-			mapCodes[rename] = string(src)
+			mapCodes[renamed] = string(src)
 		}
 	}
 	if len(rest) != 0 {
