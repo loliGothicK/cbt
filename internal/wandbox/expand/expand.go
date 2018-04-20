@@ -1,4 +1,3 @@
-// Package expand is cbt internal package.
 // Analyze C++ code and create JSON for wandbox API.
 package expand
 
