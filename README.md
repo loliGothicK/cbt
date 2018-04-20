@@ -6,7 +6,7 @@ CLI Build Tool
 
 ## cbt wandbox
 
-'cbt wandbox' command allows to send your codes to wandbox and show program result.
+`cbt wandbox` command allows to send your codes to wandbox and show program result.
 
 Example
 
@@ -27,10 +27,9 @@ hello cbt!
 ## Support Languages
 
 - C
-
 - C++
-
 - Golang
+- Ruby
 
 ## Never Support Languages
 
