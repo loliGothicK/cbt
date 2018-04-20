@@ -29,13 +29,11 @@ jobs:
           destination: raw-test-output
       - store_test_results:
           path: /tmp/test-results
-      - deploy:
-        command: |
-          if [[ -n ${CIRCLE_TAG} ]]; then
-            curl -sL https://git.io/goreleaser | bash
-          fi
+
 deployment:
-  fake_deploy_for_cci2:
+  release:
     tag: /.*/
     command: |
-      echo "goreleaser"
+      if [[ -n ${CIRCLE_TAG} ]]; then
+        curl -sL https://git.io/goreleaser | bash
+      fi
