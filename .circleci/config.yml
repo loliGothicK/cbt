@@ -9,7 +9,7 @@ jobs:
       TEST_RESULTS: /tmp/test-results
 
     steps:
-      - checkout
+      - run: 
       - run: mkdir -p $TEST_RESULTS
       - run: make preinstall
       - run: make lint
@@ -30,10 +30,23 @@ jobs:
       - store_test_results:
           path: /tmp/test-results
 
-deployment:
   release:
-    tag: /.*/
-    command: |
-      if [[ -n ${CIRCLE_TAG} ]]; then
-        curl -sL https://git.io/goreleaser | bash
-      fi
+    docker:
+      - image: circleci/golang:1.10
+    steps:
+      - checkout
+      - run: curl -sL https://git.io/goreleaser | bash
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+  release:
+    jobs:
+      - release:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/

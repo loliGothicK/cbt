@@ -264,7 +264,6 @@ func (_cli *CLI) Run() (signal int) {
 			case error:
 				panic(e.(error));
 			default:
-				panic("unknown error !");
 		}
 	}()
 	_cli.app.Writer = colorable.NewColorableStdout()
@@ -274,6 +273,17 @@ func (_cli *CLI) Run() (signal int) {
 
 func (_cli *CLI) TestRun(args []string) ([]byte, error) {
 	outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
+	defer func(){
+		e := recover()
+		switch e.(type) {
+			case Signal:
+				os.Exit(e.(Signal).value)
+			case error:
+				panic(e.(error));
+			default:
+		}
+	}()
+	_cli.app.Writer = colorable.NewColorableStdout()
 	_cli.app.Writer = outStream
 	_cli.app.ErrWriter = errStream
 	err := _cli.app.Run(args)
