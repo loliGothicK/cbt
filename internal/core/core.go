@@ -85,7 +85,7 @@ func NewCLI() *CLI {
 						cli.StringFlag{
 							Name:  "boost",
 							Usage: "specify boost library version [fmt: x.xx.x]",
-							Value: "nothing",
+							Value: "",
 						},
 						cli.BoolFlag{
 							Name:  "msgpack, m",
@@ -635,7 +635,7 @@ func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) {
 	json.Indent(out, cppJSONBytes, "", "    ") // pretty
 
 	// Client : Wait Time 30s
-	client := &http.Client{Timeout: time.Duration(30) * time.Second}
+	client := &http.Client{Timeout: time.Duration(180) * time.Second}
 	// Request : POST JSON
 	req, err := http.NewRequest("POST", "https://wandbox.org/api/compile.json?", strings.NewReader(out.String()))
 	if err != nil {

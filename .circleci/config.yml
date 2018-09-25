@@ -9,7 +9,7 @@ jobs:
       TEST_RESULTS: /tmp/test-results
 
     steps:
-      - checkout
+      - run: 
       - run: mkdir -p $TEST_RESULTS
       - run: make preinstall
       - run: make lint
