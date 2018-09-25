@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"strconv"
 
 	"github.com/LoliGothick/cbt/internal/core/solutions"
 	"github.com/LoliGothick/cbt/internal/wandbox"
@@ -24,7 +25,9 @@ import (
 type CLI struct {
 	app *cli.App
 }
-
+type Signal struct {
+	value int
+}
 func NewCLI() *CLI {
 	_cli := new(CLI)
 
@@ -251,9 +254,22 @@ func NewCLI() *CLI {
 	return _cli
 }
 
-func (_cli *CLI) Run() {
+func (_cli *CLI) Run() (signal int) {
+	signal = 0;
+	defer func(){
+		e := recover()
+		switch e.(type) {
+			case Signal:
+				os.Exit(e.(Signal).value)
+			case error:
+				panic(e.(error));
+			default:
+				panic("unknown error !");
+		}
+	}()
 	_cli.app.Writer = colorable.NewColorableStdout()
 	_cli.app.Run(os.Args)
+	return signal
 }
 
 func (_cli *CLI) TestRun(args []string) ([]byte, error) {
@@ -599,7 +615,7 @@ func WandboxRuby(c *cli.Context) {
 
 
 
-func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) *wandbox.Result {
+func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) {
 	// Marshal JSON
 	cppJSONBytes, err := json.Marshal(config)
 	if err != nil {
@@ -649,5 +665,8 @@ func postRequest(config wandbox.Request, save bool, stdout, stderr io.Writer) *w
 		stdout.Write([]byte("\n\nPermlink: " + result.Permlink))
 		stdout.Write([]byte("\nURL: " + result.URL))
 	}
-	return result
+	if result.Status != "" {
+		signal, _ := strconv.Atoi(result.Status)
+		panic(Signal{signal});
+	}
 }
