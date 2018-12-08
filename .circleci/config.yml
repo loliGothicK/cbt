@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.10.1
+      - image: circleci/golang:1.11.1
     working_directory: /go/src/github.com/LoliGothick/cbt
 
     environment:
@@ -30,23 +30,8 @@ jobs:
       - store_test_results:
           path: /tmp/test-results
 
-  release:
-    docker:
-      - image: circleci/golang:1.10
-    steps:
-      - checkout
-      - run: curl -sL https://git.io/goreleaser | bash
-
 workflows:
   version: 2
   build_and_test:
     jobs:
       - build
-  release:
-    jobs:
-      - release:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
