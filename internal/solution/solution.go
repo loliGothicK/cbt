@@ -23,14 +23,14 @@ type Info struct {
 	Addition int
 }
 
-func (i Info) Delete() {
+func (i *Info) Delete() {
 	i.Deletion++
 }
-func (i Info) Add() {
+func (i *Info) Add() {
 	i.Addition++
 }
 
-func (i Info) Show() {
+func (i *Info) Show() {
 	fmt.Println(i.Addition, `files added`)
 	fmt.Println(i.Deletion, `files deleted`)
 }
